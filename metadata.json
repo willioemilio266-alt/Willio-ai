@@ -1,0 +1,6 @@
+{
+  "name": "WILLIO",
+  "description": "Application d'intelligence artificielle personnelle francophone, sage, directe et évolutive, fondée par RANDRIANANTENAINA Emilio Berthino Charles.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

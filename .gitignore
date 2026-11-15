@@ -7,3 +7,11 @@ coverage/
 .env*
 !.env.example
 data/
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+*.apk
+*.aab
+*.keystore
+*.jks

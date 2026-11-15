@@ -188,6 +188,28 @@ async function startServer() {
   const app = express();
   app.use(express.json({ limit: '15mb' }));
 
+  app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (
+      origin &&
+      (origin === 'https://localhost' ||
+        origin === 'capacitor://localhost' ||
+        origin.startsWith('http://localhost') ||
+        origin.startsWith('http://127.0.0.1') ||
+        (process.env.APP_URL && origin === process.env.APP_URL))
+    ) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Vary', 'Origin');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-willio-email');
+    }
+    if (req.method === 'OPTIONS') {
+      res.status(204).end();
+      return;
+    }
+    next();
+  });
+
   app.get('/api/health', (_req, res) => {
     res.json({
       ok: true,

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { isNativeCapacitor } from '../utils/apiBase';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -13,6 +14,7 @@ export function usePWAInstall() {
 
   useEffect(() => {
     const isStandalone =
+      isNativeCapacitor() ||
       window.matchMedia('(display-mode: standalone)').matches ||
       (window.navigator as unknown as { standalone?: boolean }).standalone === true;
     setIsInstalled(isStandalone);

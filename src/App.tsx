@@ -28,6 +28,7 @@ import type {
   WillioStoreData,
 } from './types/willio';
 import { hasPinConfigured } from './utils/cryptoPin';
+import { apiUrl } from './utils/apiBase';
 import {
   clearLocalStore,
   emptyDeletedTracker,
@@ -140,7 +141,7 @@ export default function App() {
       const localSnapshot = localOverride ?? loadLocalStore(targetEmail);
       setIsSyncing(true);
       try {
-        const res = await fetch('/api/sync', {
+        const res = await fetch(apiUrl('/api/sync'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -262,7 +263,7 @@ export default function App() {
     setActiveConvId(tempId);
 
     try {
-      const res = await fetch('/api/chat', {
+      const res = await fetch(apiUrl('/api/chat'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -319,7 +320,7 @@ export default function App() {
       setActiveConvId(null);
     }
     try {
-      await fetch(`/api/conversations/${id}`, {
+      await fetch(apiUrl(`/api/conversations/${id}`), {
         method: 'DELETE',
         headers: syncEmail ? { 'x-willio-email': syncEmail } : undefined,
       });
@@ -341,7 +342,7 @@ export default function App() {
     setMemories((prev) => [localItem, ...prev]);
 
     try {
-      const res = await fetch('/api/memories', {
+      const res = await fetch(apiUrl('/api/memories'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -368,7 +369,7 @@ export default function App() {
       memories: Array.from(new Set([...prev.memories, id])),
     }));
     try {
-      await fetch(`/api/memories/${id}`, {
+      await fetch(apiUrl(`/api/memories/${id}`), {
         method: 'DELETE',
         headers: syncEmail ? { 'x-willio-email': syncEmail } : undefined,
       });
@@ -388,7 +389,7 @@ export default function App() {
       memories: Array.from(new Set([...prev.memories, ...removedIds])),
     }));
     try {
-      const res = await fetch('/api/memories/clear', {
+      const res = await fetch(apiUrl('/api/memories/clear'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -409,7 +410,7 @@ export default function App() {
   async function handleToggleModule(id: string, enabled: boolean) {
     setModules((prev) => prev.map((m) => (m.id === id ? { ...m, enabled } : m)));
     try {
-      const res = await fetch(`/api/modules/${id}`, {
+      const res = await fetch(apiUrl(`/api/modules/${id}`), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -431,7 +432,7 @@ export default function App() {
     description: string;
     instruction: string;
   }) {
-    const res = await fetch('/api/modules', {
+    const res = await fetch(apiUrl('/api/modules'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -452,7 +453,7 @@ export default function App() {
       modules: Array.from(new Set([...prev.modules, id])),
     }));
     try {
-      await fetch(`/api/modules/${id}`, {
+      await fetch(apiUrl(`/api/modules/${id}`), {
         method: 'DELETE',
         headers: syncEmail ? { 'x-willio-email': syncEmail } : undefined,
       });
@@ -464,7 +465,7 @@ export default function App() {
   async function handleClearAllData() {
     clearLocalStore(syncEmail);
     try {
-      const res = await fetch('/api/data/clear', {
+      const res = await fetch(apiUrl('/api/data/clear'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -534,7 +535,7 @@ export default function App() {
     setActiveConvId(convId);
 
     try {
-      const res = await fetch('/api/conversations/append', {
+      const res = await fetch(apiUrl('/api/conversations/append'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

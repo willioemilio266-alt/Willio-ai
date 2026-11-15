@@ -28,6 +28,7 @@ import {
   stripEmojisForSpeech,
   VARIED_INTERRUPTION_REACTIONS,
 } from '../utils/interruptionReactions';
+import { apiUrl } from '../utils/apiBase';
 
 const REACTION_MSG_ID = '__willio_interrupt_reaction__';
 
@@ -187,7 +188,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
       return;
     }
     const controller = new AbortController();
-    void fetch('/api/tts', {
+    void fetch(apiUrl('/api/tts'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       signal: controller.signal,
@@ -382,7 +383,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
     const timeoutId = window.setTimeout(() => controller.abort(), 3500);
     try {
       setTtsLoadingId(REACTION_MSG_ID);
-      const res = await fetch('/api/tts', {
+      const res = await fetch(apiUrl('/api/tts'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         signal: controller.signal,
@@ -453,7 +454,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
     try {
       setTtsLoadingId(msg.id);
-      const res = await fetch('/api/tts', {
+      const res = await fetch(apiUrl('/api/tts'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         signal: controller.signal,
@@ -521,7 +522,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
             reader.onerror = reject;
             reader.readAsDataURL(blob);
           });
-          const res = await fetch('/api/transcribe', {
+          const res = await fetch(apiUrl('/api/transcribe'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ audioBase64: base64, mimeType }),

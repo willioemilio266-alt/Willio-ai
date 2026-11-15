@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import {
+  CheckCircle2,
   Download,
   Lock,
   Moon,
+  Server,
   Shield,
   Smartphone,
   Sun,
@@ -11,6 +13,14 @@ import {
 } from 'lucide-react';
 import type { WillioSettings } from '../types/willio';
 import { clearPin, hasPinConfigured, savePin } from '../utils/cryptoPin';
+import {
+  apiUrl,
+  DEFAULT_APK_BACKEND_URL,
+  getBackendBaseUrl,
+  getSavedBackendUrl,
+  isNativeCapacitor,
+  saveBackendUrl,
+} from '../utils/apiBase';
 import { PWAInstallButton } from './PWAInstallButton';
 
 interface SettingsViewProps {
@@ -34,6 +44,51 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [newPin, setNewPin] = useState('');
   const [pinFeedback, setPinFeedback] = useState<string | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [serverUrlInput, setServerUrlInput] = useState(
+    () => getSavedBackendUrl() || getBackendBaseUrl()
+  );
+  const [serverStatus, setServerStatus] = useState<string | null>(null);
+  const [testingServer, setTestingServer] = useState(false);
+  const runningInApk = isNativeCapacitor();
+
+  async function handleSaveAndTestServer(e: React.FormEvent) {
+    e.preventDefault();
+    const saved = saveBackendUrl(serverUrlInput);
+    setServerUrlInput(saved);
+    setTestingServer(true);
+    setServerStatus(null);
+    try {
+      const res = await fetch(apiUrl('/api/health'));
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = (await res.json()) as { ok?: boolean; aiConfigured?: boolean };
+      if (data.ok) {
+        setServerStatus(
+          data.aiConfigured
+            ? 'Serveur WILLIO joignable et moteur IA actif.'
+            : 'Serveur joignable, mais GEMINI_API_KEY est absente côté serveur.'
+        );
+      } else {
+        setServerStatus('Réponse serveur inattendue.');
+      }
+    } catch {
+      setServerStatus(
+        'Connexion impossible à cette URL. Vérifiez que le serveur HTTPS est en ligne.'
+      );
+    } finally {
+      setTestingServer(false);
+    }
+  }
+
+  function handleResetServerUrl() {
+    saveBackendUrl('');
+    const next = runningInApk ? DEFAULT_APK_BACKEND_URL : '';
+    setServerUrlInput(next);
+    setServerStatus(
+      runningInApk
+        ? 'URL par défaut restaurée pour l’APK Android.'
+        : 'Mode web relatif restauré.'
+    );
+  }
 
   async function handleSavePin(e: React.FormEvent) {
     e.preventDefault();
@@ -261,11 +316,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
           <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center gap-3">
             <a
-              href={
+              href={apiUrl(
                 syncEmail
                   ? `/api/data/export?email=${encodeURIComponent(syncEmail)}`
                   : '/api/data/export'
-              }
+              )}
               download="willio-donnees.json"
               className="inline-flex items-center gap-2 rounded-xl border border-slate-300 dark:border-slate-700 px-3.5 min-h-[42px] text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
             >
@@ -331,6 +386,57 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               sans barre de navigateur, consommant très peu de RAM.
             </li>
           </ol>
+        </section>
+
+        {/* Serveur IA distant pour la version APK Android (Capacitor) */}
+        <section className="rounded-2xl bg-white dark:bg-[#131A26] border border-slate-200 dark:border-slate-800 p-4 space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Server className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                Serveur distant (APK Android Capacitor)
+              </h2>
+            </div>
+            <span className="text-[11px] font-medium px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+              {runningInApk ? 'Mode APK Android' : 'Mode Navigateur Web'}
+            </span>
+          </div>
+          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+            Dans l’APK Android, WILLIO conserve votre mémoire et vos conversations localement sur
+            le téléphone tout en contactant votre serveur HTTPS distant pour l’IA, la voix
+            masculine et la synchronisation email (aucune clé API secrète dans l’APK).
+          </p>
+
+          <form onSubmit={handleSaveAndTestServer} className="flex flex-wrap items-center gap-2">
+            <input
+              type="url"
+              value={serverUrlInput}
+              onChange={(e) => setServerUrlInput(e.target.value)}
+              placeholder={DEFAULT_APK_BACKEND_URL}
+              className="flex-1 min-w-[220px] min-h-[44px] px-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-slate-100"
+            />
+            <button
+              type="submit"
+              disabled={testingServer}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-slate-950 text-xs font-semibold px-4 min-h-[44px] disabled:opacity-50"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>{testingServer ? 'Test...' : 'Enregistrer & Tester'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleResetServerUrl}
+              className="rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-medium px-3.5 min-h-[44px]"
+            >
+              Réinitialiser
+            </button>
+          </form>
+
+          {serverStatus && (
+            <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
+              {serverStatus}
+            </p>
+          )}
         </section>
       </div>
     </div>

@@ -14,6 +14,7 @@ import {
   DEFAULT_INTERRUPTION_REACTION,
   VARIED_INTERRUPTION_REACTIONS,
 } from '../utils/interruptionReactions';
+import { apiUrl, wsUrl } from '../utils/apiBase';
 
 export type VoiceCallEngine = 'continuous' | 'live';
 export type VoicePhase =
@@ -385,13 +386,12 @@ export const VoiceCallBar: React.FC<VoiceCallBarProps> = ({
       outputAudioCtxRef.current = outputCtx;
       nextStartTimeRef.current = outputCtx.currentTime;
 
-      const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
       const params = new URLSearchParams();
       if (syncEmail) params.set('email', syncEmail);
       if (conversationIdRef.current) params.set('conversationId', conversationIdRef.current);
       params.set('voice', settings.geminiVoiceName);
 
-      const ws = new WebSocket(`${proto}//${location.host}/ws/live?${params.toString()}`);
+      const ws = new WebSocket(wsUrl(`/ws/live?${params.toString()}`));
       liveWsRef.current = ws;
 
       ws.onmessage = (event) => {
@@ -608,7 +608,7 @@ export const VoiceCallBar: React.FC<VoiceCallBarProps> = ({
             reader.onerror = reject;
             reader.readAsDataURL(blob);
           });
-          const res = await fetch('/api/transcribe', {
+          const res = await fetch(apiUrl('/api/transcribe'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ audioBase64: base64, mimeType }),

@@ -834,8 +834,7 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     app.use((req, res) => {
-      res.status(404).Jason({ error: 'Not
-    found' });
+      res.status(404).json({ error: 'Not found' });
     });
   }
 
